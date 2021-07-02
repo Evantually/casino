@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+
+{% block app_content %}
+    <h1>Wee Zull Casino - Blackjack</h1>
+    <div id="player_buttons">
+        <div class="row">
+            <div id="add_player" class="col-md-4 btn btn-primary" style="width: 20%">Add Player</div>
+            <div id="reset_cards" class="col-md-4 btn btn-primary" style="width: 20%">Reset Cards</div>
+            <div id="accept_bets" class="col-md-4 btn btn-primary" style="width: 20%">Accept Bets</div>
+            <div id="payout_winnings" class="col-md-4 btn btn-primary" style="width: 20%">Payout Winnings</div>
+        </div>
+    </div>
+    <div id="card_placeholder" class="row"></div>
+{% endblock %}

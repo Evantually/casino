@@ -21,11 +21,7 @@ d3.json('/get_cards').then(function(data) {
         .on("click", function() {
             PayoutWinnings();
         });
-    AddPlayer(card_placeholder, data);        
-    AddPlayer(card_placeholder, data, "Josh", "500", "10000");
-    AddPlayer(card_placeholder, data, "Joshie", "750", "10000");
-    AddPlayer(card_placeholder, data, "Alex", "1000", "10000");
-    AddPlayer(card_placeholder, data, "Evan", "1000", "10000");
+    AddPlayer(card_placeholder, data);
 });
 
 function AddPlayer(card_placeholder, data, player_name="", bet="0", chips="0") {
@@ -73,7 +69,12 @@ function AddPlayer(card_placeholder, data, player_name="", bet="0", chips="0") {
     chips_input
         .append("input")
         .classed("form-control chips", true)
-        .property("value", chips);
+        .property("value", chips)
+        .on("click", function() {
+            d3.select(this).style('transition-property', 'background-color')
+            .style('transition-duration', '1s')
+            .style('background-color', 'transparent')
+        });
     var card_input = card_div
         .append("input")
         .classed("form-control card-input", true);
@@ -124,23 +125,38 @@ function AddPlayer(card_placeholder, data, player_name="", bet="0", chips="0") {
         });
 }
 
+function NotEnoughChips(card_div) {
+    card_div.select('.chips')
+            .style('transition-property', 'background-color')
+            .style('transition-duration', '1.5s')
+            .style('background-color', 'red')
+}
+
 function Split(card_div, card_div_cards, cards_total, card_placeholder, data) {
-    AddPlayer(card_placeholder, data, player_name=card_div.select('.name').node().value, bet=card_div.select('.bet').node().value)
-    card_div.select('.chips').node().value = parseInt(card_div.select('.chips').node().value) - parseInt(card_div.select('.bet').node().value);
-    var new_player = d3.selectAll(".player:last-of-type");
-    var new_player_card_input = new_player.select('.card-input')
-    new_player_card_input.node().value = card_div.select('.card-input').node().value.split(',')[1] ? card_div.select('.card-input').node().value.split(',')[1] : card_div.select('.card-input').node().value;
-    AddCard(new_player.select('.row'), new_player_card_input, new_player.select('.total'), data);
-    RemoveCard(card_div, card_div_cards, cards_total);
+    if (card_div.select('.chips').node().value >= card_div.select('.bet').node().value) {
+        AddPlayer(card_placeholder, data, player_name=card_div.select('.name').node().value, bet=card_div.select('.bet').node().value)
+        card_div.select('.chips').node().value = parseInt(card_div.select('.chips').node().value) - parseInt(card_div.select('.bet').node().value);
+        var new_player = d3.selectAll(".player:last-of-type");
+        var new_player_card_input = new_player.select('.card-input')
+        new_player_card_input.node().value = card_div.select('.card-input').node().value.split(',')[1] ? card_div.select('.card-input').node().value.split(',')[1] : card_div.select('.card-input').node().value;
+        AddCard(new_player.select('.row'), new_player_card_input, new_player.select('.total'), data);
+        RemoveCard(card_div, card_div_cards, cards_total);
+    } else {
+        NotEnoughChips(card_div);
+    }
 }
 
 function DoubleDown(card_div) {
     bet = parseInt(card_div.select('.bet').node().value);
     chips = parseInt(card_div.select('.chips').node().value);
-    card_div.select('.bet').node().value = bet * 2;
-    card_div.select('.chips').node().value = chips - bet;
-    card_div.select('.double-down').style('visibility', 'hidden');
-    card_div.select('.surrender').style('visibility', 'hidden')
+    if (chips >= bet) {
+        card_div.select('.bet').node().value = bet * 2;
+        card_div.select('.chips').node().value = chips - bet;
+        card_div.select('.double-down').style('visibility', 'hidden');
+        card_div.select('.surrender').style('visibility', 'hidden');
+    } else {
+        NotEnoughChips(card_div);
+    }
 }
 
 function ResetCards() {

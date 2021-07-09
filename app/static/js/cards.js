@@ -21,9 +21,14 @@ d3.json('/get_cards').then(function(data) {
         .on("click", function() {
             PayoutWinnings();
         });
+    AddPlayer(card_placeholder, data);        
+    AddPlayer(card_placeholder, data, "Josh", "500", "10000");
+    AddPlayer(card_placeholder, data, "Joshie", "750", "10000");
+    AddPlayer(card_placeholder, data, "Alex", "1000", "10000");
+    AddPlayer(card_placeholder, data, "Evan", "1000", "10000");
 });
 
-function AddPlayer(card_placeholder, data) {
+function AddPlayer(card_placeholder, data, player_name="", bet="0", chips="0") {
     var card_div = card_placeholder
         .append("div")
         .classed("player col-md-4", true)
@@ -32,10 +37,10 @@ function AddPlayer(card_placeholder, data) {
         .style("border-style", "solid");
     var cards_total = card_div
         .append("div")
-        .classed("total", true)
+        .classed("total", true);
     card_div
         .append("div")
-        .classed("payout", true)
+        .classed("payout", true);
     var card_div_cards = card_div
         .append("div")
         .classed("row", true);
@@ -47,7 +52,8 @@ function AddPlayer(card_placeholder, data) {
         .text("Name ");
     name_input
         .append("input")
-        .classed("form-control", true);
+        .classed("form-control name", true)
+        .property("value", player_name);
     var bet_input = card_div
         .append("div")
         .classed("form-group", true);
@@ -56,7 +62,8 @@ function AddPlayer(card_placeholder, data) {
         .text("Bet ");
     bet_input
         .append("input")
-        .classed("form-control bet", true);
+        .classed("form-control bet", true)
+        .property("value", bet);
     var chips_input = card_div
         .append("div")
         .classed("form-group", true);
@@ -65,10 +72,11 @@ function AddPlayer(card_placeholder, data) {
         .text("Chips ");
     chips_input
         .append("input")
-        .classed("form-control chips", true);
+        .classed("form-control chips", true)
+        .property("value", chips);
     var card_input = card_div
         .append("input")
-        .classed("form-control", true);
+        .classed("form-control card-input", true);
     card_div
         .append("div")
         .classed("btn btn-primary", true)
@@ -85,22 +93,54 @@ function AddPlayer(card_placeholder, data) {
         });
     card_div
         .append("div")
+        .classed("btn btn-primary remove-player", true)
+        .text("Remove Player")
+        .on("click", function() {
+            RemovePlayer(card_div);
+        });
+    card_div
+        .append("div")
         .classed("btn btn-primary surrender", true)
+        .style("visibility", "hidden")
         .text("Surrender")
         .on("click", function() {
             Surrender(card_div, card_div_cards, cards_total);
         });
     card_div
         .append("div")
-        .classed("btn btn-primary remove-player", true)
-        .text("Remove Player")
+        .classed("btn btn-primary double-down", true)
+        .style("visibility", "hidden")
+        .text("Double Down")
         .on("click", function() {
-            RemovePlayer(card_div);
+            DoubleDown(card_div);
+        });
+    card_div
+        .append("div")
+        .classed("btn btn-primary split", true)
+        .style("visibility", "hidden")
+        .text("Split")
+        .on("click", function() {
+            Split(card_div, card_div_cards, cards_total, card_placeholder, data);
         });
 }
 
-function RemovePlayer(card_div) {
-    card_div.remove();
+function Split(card_div, card_div_cards, cards_total, card_placeholder, data) {
+    AddPlayer(card_placeholder, data, player_name=card_div.select('.name').node().value, bet=card_div.select('.bet').node().value)
+    card_div.select('.chips').node().value = parseInt(card_div.select('.chips').node().value) - parseInt(card_div.select('.bet').node().value);
+    var new_player = d3.selectAll(".player:last-of-type");
+    var new_player_card_input = new_player.select('.card-input')
+    new_player_card_input.node().value = card_div.select('.card-input').node().value.split(',')[1] ? card_div.select('.card-input').node().value.split(',')[1] : card_div.select('.card-input').node().value;
+    AddCard(new_player.select('.row'), new_player_card_input, new_player.select('.total'), data);
+    RemoveCard(card_div, card_div_cards, cards_total);
+}
+
+function DoubleDown(card_div) {
+    bet = parseInt(card_div.select('.bet').node().value);
+    chips = parseInt(card_div.select('.chips').node().value);
+    card_div.select('.bet').node().value = bet * 2;
+    card_div.select('.chips').node().value = chips - bet;
+    card_div.select('.double-down').style('visibility', 'hidden');
+    card_div.select('.surrender').style('visibility', 'hidden')
 }
 
 function ResetCards() {
@@ -110,8 +150,7 @@ function ResetCards() {
         cards_total = d3.select(total);
         cards_total.attr("total", 0);
         cards_total.text(`Total: 0`);
-    })
-    
+    });
 }
 
 function RemoveCard(card_div, card_div_cards, cards_total) {
@@ -128,12 +167,12 @@ function RemoveCard(card_div, card_div_cards, cards_total) {
 }
 
 function AddCard(card_div, card_input, cards_total, data) {
-    // try {
+    try {
         if (card_input.node().value.includes(',')) {
             cards = card_input.node().value.split(',');
             for (i=0; i<cards.length; i++) {
                 card = data[parseInt(cards[i])-1];
-                GetCardByValue(card ,card_div);
+                GetCardByValue(card, card_div);
             }
         } else {
             card = data[parseInt(card_input.node().value)-1];
@@ -148,9 +187,9 @@ function AddCard(card_div, card_input, cards_total, data) {
         cards_total.attr("total", total);
         cards_total.text(`Total: ${total}`);
         CalculateBJPayout();
-    // } catch {
-    //     var card_area = card_div.select(".col-md-4:last-of-type").remove();
-    // }
+    } catch {
+        card_div.select(".col-md-4:last-of-type").remove();
+    }
 
 }
 
@@ -159,11 +198,15 @@ function GetCardByValue(card, card_div) {
         .append("div")
         .classed("col-md-4 cards", true)
         .attr("value", parseInt(card.value))
+        .attr("name", card.name)
         .style("width", "75px")
-        .style("height", "125px")
+        .style("height", "125px");
     card_area
-        .append("img")
-        .attr("src", card.img_path);
+        .append("object")
+        .attr("data", card.img_path)
+        .attr("type", "image/svg+xml")
+        .attr("width", "70px")
+        .attr("height", "120px");
     card_area
         .append("div")
         .text(card.name);
@@ -192,14 +235,26 @@ function CalculateBJPayout() {
     console.log(players);
     players.each(function(d, i) {
         player = d3.select(this);
-        player_cards = player.selectAll('.cards').nodes().length;
-        if (player_cards > 2) {
-            player.select(".surrender").style("visibility", "hidden");
-        } else {
+        player_nodes = player.selectAll('.cards').nodes();
+        player_values = [];
+        card_names = [];
+        for (i=0;i<player_nodes.length;i++) {
+            player_values.push(parseInt(d3.select(player_nodes[i]).attr("value")));
+            card_names.push(d3.select(player_nodes[i]).attr("name"));
+        }
+        if (player_nodes.length === 2) {
             player.select(".surrender").style("visibility", "visible");
+            player.select(".double-down").style("visibility", "visible");
+            if (player_values[0] === player_values[1] || card_names[0] === card_names[1]) {
+                player.select(".split").style("visibility", "visible");
+            }
+        } else {
+            player.select(".surrender").style("visibility", "hidden");
+            player.select(".double-down").style("visibility", "hidden");
+            player.select(".split").style("visibility", "hidden");
         }
         player_total = parseInt(player.select('.total').attr('total'));
-        player_blackjack = determineBlackjack(player_cards, player_total);
+        player_blackjack = determineBlackjack(player_nodes.length, player_total);
         player_bet = parseInt(player.select('.bet').node().value);
         if (player_blackjack && dealer_blackjack) {
             payout = player_bet;
@@ -237,12 +292,29 @@ function AcceptBets() {
 function PayoutWinnings() {
     payouts = d3.selectAll('.payout').nodes();
     chips = d3.selectAll('.chips').nodes();
+    names = d3.selectAll('.name').nodes();
+    counts = {};
     payouts.forEach((payout, i) => {
-        console.log(payout);
         payout_amount = parseInt(payout.textContent.split(':')[1]);
         chips_amount = parseInt(chips[i].value);
-        chips[i].value = chips_amount + payout_amount;
+        counts[names[i].value] = counts[names[i].value] ? counts[names[i].value] + chips_amount + payout_amount : chips_amount + payout_amount;
+        chips.value = counts[names[i].value];
     });
+    console.log(counts);
+    for ([key,value] of Object.entries(counts)) {
+        player_divs = d3.selectAll('.player').filter(function() {
+            return player = d3.select(this).select('.name').property("value") == key;
+        });
+        console.log(player_divs);
+        for (var i=0; i<player_divs.nodes().length; i++) {
+            if (i === 0) {
+                d3.select(player_divs.nodes()[i]).select('.chips').node().value = value;
+            } else {
+                RemovePlayer(d3.select(player_divs.nodes()[i]))
+            }
+        }
+    }
+
 }
 
 function determineBlackjack(cards, total) {
@@ -258,4 +330,10 @@ function Surrender(card_div) {
     player_bet = parseInt(card_div.select('.bet').node().value);
     chips = parseInt(card_div.select('.chips').node().value);
     card_div.select('.chips').node().value = chips + Math.floor(player_bet * 0.5);
+    card_div.select('.surrender').style('visibility', 'hidden')
+    card_div.select('.double-down').style('visibility', 'hidden');
+}
+
+function RemovePlayer(card_div) {
+    card_div.remove();
 }

@@ -21,11 +21,11 @@ def initial_setup():
     for c in all_cards:
         db.session.delete(c)
     db.session.commit()
-    card_names = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K']
+    card_names = ['ace', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'jack', 'queen', 'king']
     card_values = [11, 2, 3, 4, 5, 6, 7, 8, 9, 10, 10, 10, 10]
     card_paths = []
     for card_name in card_names:
-        card_paths.append(url_for('static', filename=f'imgs/{card_name}.png'))
+        card_paths.append(url_for('static', filename=f'imgs/{card_name}_of_spades.svg'))
     for index, card_name in enumerate(card_names):
         card = Card(name=card_name, value=card_values[index], img_path=card_paths[index])
         db.session.add(card)

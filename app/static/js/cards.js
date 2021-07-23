@@ -22,7 +22,14 @@ d3.json('/get_cards').then(function(data) {
             PayoutWinnings();
         });
     AddPlayer(card_placeholder, data);
+    AddPlayer(card_placeholder, data, "Straag", "500", "10000")
+    AddPlayer(card_placeholder, data, "Connie", "500", "10000")
+    AddPlayer(card_placeholder, data, "Vlad", "500", "10000")
 });
+
+function getRandomInt(max) {
+    return Math.floor(Math.random() * max);
+ }
 
 function AddPlayer(card_placeholder, data, player_name="", bet="0", chips="0") {
     var card_div = card_placeholder
@@ -133,7 +140,7 @@ function NotEnoughChips(card_div) {
 }
 
 function Split(card_div, card_div_cards, cards_total, card_placeholder, data) {
-    if (card_div.select('.chips').node().value >= card_div.select('.bet').node().value) {
+    if (parseInt(card_div.select('.chips').node().value) >= parseInt(card_div.select('.bet').node().value)) {
         AddPlayer(card_placeholder, data, player_name=card_div.select('.name').node().value, bet=card_div.select('.bet').node().value)
         card_div.select('.chips').node().value = parseInt(card_div.select('.chips').node().value) - parseInt(card_div.select('.bet').node().value);
         var new_player = d3.selectAll(".player:last-of-type");
@@ -184,7 +191,10 @@ function RemoveCard(card_div, card_div_cards, cards_total) {
 
 function AddCard(card_div, card_input, cards_total, data) {
     try {
-        if (card_input.node().value.includes(',')) {
+        if (card_input.node().value === "") {
+            card = data[getRandomInt(13)];
+            GetCardByValue(card, card_div);
+        } else if (card_input.node().value.includes(',')) {
             cards = card_input.node().value.split(',');
             for (i=0; i<cards.length; i++) {
                 card = data[parseInt(cards[i])-1];
